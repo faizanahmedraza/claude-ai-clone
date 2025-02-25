@@ -61,6 +61,8 @@ if (!function_exists('chatbot_ajax_request')) {
 			die();
 		}
 
+		curl_close($ch);
+
 		if ($http_status !== 200) {
 			error_log('API request failed with status ' . $http_status . ' Response: ' . $response);
 			echo json_encode(['error' => 'API Request Failed', 'status' => $http_status, 'response' => $response]);
@@ -359,63 +361,63 @@ if (!function_exists('chatbot_ajax_request')) {
 			$search_data['zipcode'] = $zipcode;
 		}
 
-
-		curl_close($ch);
-
 		$all_properties = array();
 		$map_properties_data = array();
-		$wp_args = new WP_Query($query_args);
-		$total_properties = $wp_args->found_posts;
 
-		$default_image_url = 'https://www.linkhomeai.com/wp-content/uploads/2022/01/home-header-2.jpg';
+		if (count($search_data) > 0) {
+			$wp_args = new WP_Query($query_args);
+			$total_properties = $wp_args->found_posts;
 
-		if ($wp_args->have_posts()) {
-			$counter = 0;
-			while ($wp_args->have_posts()): $wp_args->the_post();
-				$post_id = get_the_ID();
-				$property_location = get_post_meta($post_id, 'fave_property_location', true);
-				$lat_lng = explode(',', $property_location);
-				$prop_images = get_post_meta($post_id, 'fave_property_images', false);
-		
-				// Add data to the map_properties_data array for all properties
-				$map_properties_data[] = array(
-					'id' => $post_id,
-					'title' => get_the_title(),
-					'lat' => $lat_lng[0],
-					'lng' => $lat_lng[1],
-					'url' => get_permalink(),
-					'pricePin' => houzez_listing_price_map_pins(),
-				);
-		
-				// Add only the first 10 properties to the main list
-				if ($counter < 10) {
-					$prop = new stdClass();
-		
-					$prop->id = $post_id;
-					$prop->title = get_the_title();
-					$prop->sanitizetitle = sanitize_title(get_the_title());
-					$prop->lat = $lat_lng[0];
-					$prop->lng = $lat_lng[1];
-					$prop->bedrooms = get_post_meta($post_id, 'fave_property_bedrooms', true);
-					$prop->bathrooms = get_post_meta($post_id, 'fave_property_bathrooms', true);
-					$prop->garages = get_post_meta($post_id, 'fave_property_garage', true);
-					$prop->size = get_post_meta($post_id, 'fave_property_size', true);
-					$prop->address = get_post_meta($post_id, 'fave_property_map_address', true);
-					$prop->thumbnail = get_the_post_thumbnail($post_id, 'houzez-property-thumb-image');
-					$property_image = get_the_post_thumbnail_url($post_id, 'houzez-item-image-1') ?: $default_image_url;
-					$prop->imageUrl = $property_image;
-					$prop->url = get_permalink();
-					$prop->prop_meta = houzez_listing_meta_v1();
-					$prop->type = houzez_taxonomy_simple('property_type');
-					$prop->images_count = count($prop_images);
-					$prop->price = houzez_listing_price_v1();
-					$prop->pricePin = houzez_listing_price_map_pins();
-		
-					$all_properties[] = $prop;
-				}
-		
-				$counter++;
-			endwhile;
+			$default_image_url = 'https://www.linkhomeai.com/wp-content/uploads/2022/01/home-header-2.jpg';
+
+			if ($wp_args->have_posts()) {
+				$counter = 0;
+				while ($wp_args->have_posts()): $wp_args->the_post();
+					$post_id = get_the_ID();
+					$property_location = get_post_meta($post_id, 'fave_property_location', true);
+					$lat_lng = explode(',', $property_location);
+					$prop_images = get_post_meta($post_id, 'fave_property_images', false);
+
+					// Add data to the map_properties_data array for all properties
+					$map_properties_data[] = array(
+						'id' => $post_id,
+						'title' => get_the_title(),
+						'lat' => $lat_lng[0],
+						'lng' => $lat_lng[1],
+						'url' => get_permalink(),
+						'pricePin' => houzez_listing_price_map_pins(),
+					);
+
+					// Add only the first 10 properties to the main list
+					if ($counter < 10) {
+						$prop = new stdClass();
+
+						$prop->id = $post_id;
+						$prop->title = get_the_title();
+						$prop->sanitizetitle = sanitize_title(get_the_title());
+						$prop->lat = $lat_lng[0];
+						$prop->lng = $lat_lng[1];
+						$prop->bedrooms = get_post_meta($post_id, 'fave_property_bedrooms', true);
+						$prop->bathrooms = get_post_meta($post_id, 'fave_property_bathrooms', true);
+						$prop->garages = get_post_meta($post_id, 'fave_property_garage', true);
+						$prop->size = get_post_meta($post_id, 'fave_property_size', true);
+						$prop->address = get_post_meta($post_id, 'fave_property_map_address', true);
+						$prop->thumbnail = get_the_post_thumbnail($post_id, 'houzez-property-thumb-image');
+						$property_image = get_the_post_thumbnail_url($post_id, 'houzez-item-image-1') ?: $default_image_url;
+						$prop->imageUrl = $property_image;
+						$prop->url = get_permalink();
+						$prop->prop_meta = houzez_listing_meta_v1();
+						$prop->type = houzez_taxonomy_simple('property_type');
+						$prop->images_count = count($prop_images);
+						$prop->price = houzez_listing_price_v1();
+						$prop->pricePin = houzez_listing_price_map_pins();
+
+						$all_properties[] = $prop;
+					}
+
+					$counter++;
+				endwhile;
+			}
 		}
 
 		wp_reset_postdata();

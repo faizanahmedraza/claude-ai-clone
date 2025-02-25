@@ -796,6 +796,8 @@ a.property-link,
 
     .chat-header {
         font-size: 14px;
+        white-space: break-spaces;
+        margin: 0 18px;
     }
 
     .chat-container {
